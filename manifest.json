@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Gemini Quote Helper",
+  "version": "1.0.0",
+  "description": "Geminiの回答を引用しやすくする拡張機能",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "js": ["src/content/main.tsx"],
+      "matches": ["https://gemini.google.com/*"]
+    }
+  ]
+}
