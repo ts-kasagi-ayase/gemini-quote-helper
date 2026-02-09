@@ -24,9 +24,10 @@ export const formatBubble = (el: HTMLElement): void => {
 
   const canvas = document.createElement('div');
   canvas.className = 'custom-quote-canvas';
+  canvas.style.cssText = 'margin: 0 auto 20px auto; width: 100%; user-select: text; -webkit-user-select: text; pointer-events: auto; position: relative; z-index: 1000; cursor: text;';
   canvas.innerHTML = `
     <div style="display: flex; gap: 10px; align-items: flex-start; pointer-events: auto;">
-      <span style="color: #1a73e8; font-weight: bold; flex-shrink: 0; user-select: none;">↪</span>
+      <span class="quote-icon">↪</span>
       <div class="quote-text">${quoteTxt}</div>
     </div>
   `;

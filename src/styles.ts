@@ -29,7 +29,7 @@ export const INJECTED_STYLES = `
   .quote-text {
     font-size: 14px;
     line-height: 1.5;
-    color: #969ba1;
+    color: #5f6368;
     user-select: text !important;
     -webkit-user-select: text !important;
     pointer-events: auto !important;
@@ -68,6 +68,6 @@ export const INJECTED_STYLES = `
 
   [data-theme='dark'] .quote-text,
   .dark .quote-text {
-    color: #c4c7c5 !important;
+    color: #e3e3e3 !important;
   }
 `;
