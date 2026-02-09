@@ -68,21 +68,37 @@ const getIsDark = () => {
 };
 
 const formatBubble = (el: HTMLElement) => {
-  if (el.dataset.quoteFormatted) return;
+  if (el.dataset.quoteFormatted || el.closest('.custom-quote-canvas')) return;
+  
   const raw = el.innerText;
   if (raw.includes('### 以下の内容を引用して質問します:')) {
+    // """ で囲まれた引用部分を抽出
     const quoteMatch = raw.match(/"""([\s\S]*?)"""/);
-    const questionMatch = raw.split('### 質問:');
-    const quoteTxt = quoteMatch ? quoteMatch[1].trim() : "";
-    const questionTxt = questionMatch.length > 1 ? questionMatch[1].trim() : "";
+    // 「### 質問:」より後の部分をすべて取得
+    const parts = raw.split('### 質問:');
+    
+    // 引用：改行をスペースにして、前後をトリミング
+    const quoteTxt = quoteMatch ? quoteMatch[1].replace(/\r?\n|\r/g, ' ').trim() : "";
+    
+    // 質問：ここが重要！前後の空白・改行を完全に消し去る
+    const questionTxt = parts.length > 1 ? parts[1].trim() : "";
 
-    el.innerHTML = `
-      <div class="custom-quote-bubble">
-        <div class="custom-quote-label">引用されたテキスト</div>
-        <div class="custom-quote-content">${quoteTxt}</div>
+    const canvas = document.createElement('div');
+    canvas.className = 'custom-quote-canvas';
+    canvas.innerHTML = `
+      <div style="display: flex; gap: 10px; align-items: flex-start; pointer-events: auto;">
+        <span style="color: #1a73e8; font-weight: bold; flex-shrink: 0; user-select: none;">↪</span>
+        <div class="quote-text" style="font-size: 14px; line-height: 1.5; color: #969ba1;">${quoteTxt}</div>
       </div>
-      <div class="custom-question-content">${questionTxt || ""}</div>
     `;
+
+    const target = el.closest('.query-content');
+    if (target?.parentNode) {
+      target.parentNode.insertBefore(canvas, target);
+    }
+
+    // 書き戻す時に trim() された綺麗なテキストを入れる
+    el.innerText = questionTxt; 
     el.dataset.quoteFormatted = "true";
   }
 };
@@ -143,35 +159,105 @@ const QuotePreview = () => {
 
   return (
     <div style={{
-      width: '100%', backgroundColor: styles.bg, color: styles.text,
-      border: `1px solid ${styles.border}`, padding: '12px 20px',
-      borderRadius: '24px 24px 0 0', borderBottom: 'none', display: 'flex',
-      boxSizing: 'border-box', marginBottom: '-1px', position: 'relative', zIndex: 1000,
+      width: '100%',
+      backgroundColor: styles.bg,
+      color: styles.text,
+      border: `1px solid ${styles.border}`,
+      padding: '12px 20px',
+      borderRadius: '16px',
+      display: 'flex',
+      boxSizing: 'border-box',
+      marginBottom: '8px',
+      position: 'relative',
+      zIndex: 1000,
+      overflow: 'hidden',
+      alignItems: 'flex-start'
     }}>
-      <div style={{ display: 'flex', gap: '12px', width: '100%', fontSize: '13px' }}>
-        <div style={{ color: styles.accent, fontSize: '18px', fontWeight: 'bold' }}>↪</div>
-        <div style={{ flex: 1, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: '12px', width: '100%', fontSize: '13px', alignItems: 'flex-start' }}>
+        <div style={{ color: styles.accent, fontSize: '18px', fontWeight: 'bold', lineHeight: '1.2' }}>↪</div>
+        <div style={{
+          flex: 1,
+          display: '-webkit-box',
+          WebkitLineClamp: 3,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          color: styles.text 
+        }}>
           {text}
         </div>
       </div>
-      <button onClick={() => setText('')} style={{ cursor: 'pointer', border: 'none', background: 'none', color: 'inherit', opacity: 0.7 }}>✕</button>
+      <button
+        onClick={() => setText('')}
+        style={{ cursor: 'pointer', border: 'none', background: 'none', color: 'inherit', opacity: 0.7, marginLeft: '8px' }}
+      >
+        ✕
+      </button>
     </div>
   );
 };
 
 const inject = () => {
   if (!document.getElementById('custom-quote-styles')) {
+    
     const style = document.createElement('style');
     style.id = 'custom-quote-styles';
     style.innerHTML = `
-      .custom-quote-bubble { background: rgba(0, 0, 0, 0.06); border-left: 4px solid #1a73e8; padding: 8px 12px; margin-bottom: 10px; border-radius: 4px; font-size: 0.95em; }
-      .custom-quote-label { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; opacity: 0.7; }
-      .custom-quote-content { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
-      .dark-mode .custom-quote-bubble, [data-theme='dark'] .custom-quote-bubble { background: rgba(255, 255, 255, 0.1); border-left-color: #a8c7fa; }
-      #root-preview { width: 100%; max-width: 800px; margin: 0 auto; }
+      .custom-quote-container {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        align-items: flex-start;
+      }
+      .quote-icon {
+        font-weight: bold;
+        flex-shrink: 0;
+        font-size: 1.1em;
+        color: #1a73e8;
+      }
+      .custom-quote-content {
+        color: #5F6368; 
+        font-size: 0.85em; 
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-all;
+        background: #f0f4f9;
+        padding: 8px 12px;
+        border-radius: 8px;
+      }
+
+      .custom-quote-canvas, 
+      .quote-text {
+        /* 1. 選択を強制許可 */
+        margin: 0 auto 12px auto;
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        
+        /* 2. マウス操作を拒否させない */
+        pointer-events: auto !important;
+        
+        /* 3. 重なり順を上げて、透明なレイヤーより手前に出す */
+        position: relative;
+        z-index: 1000;
+        
+        /* 4. カーソルをテキスト選択用にする */
+        cursor: text;
+      }
+
+      [data-theme='dark'] .custom-quote-content, .dark .custom-quote-content {
+        color: #AFAFAF !important;
+        background: #2a2b2d !important;
+      }
+      [data-theme='dark'] .quote-icon, .dark .quote-icon {
+        color: #a8c7fa !important;
+      }
     `;
+    
     document.head.appendChild(style);
   }
+
 
   if (!document.getElementById('root-button')) {
     const btnRoot = document.createElement('div');
@@ -180,9 +266,9 @@ const inject = () => {
     ReactDOM.createRoot(btnRoot).render(<FloatingButton />);
   }
 
-  const inputContainer = document.querySelector('.input-area-container, .text-input-field-container, .input-field-container') 
-                         || document.querySelector('div:has(> .text-input-field)');
-  
+  const inputContainer = document.querySelector('.input-area-container, .text-input-field-container, .input-field-container')
+    || document.querySelector('div:has(> .text-input-field)');
+
   if (inputContainer && !document.getElementById('root-preview')) {
     const preRoot = document.createElement('div');
     preRoot.id = 'root-preview';
