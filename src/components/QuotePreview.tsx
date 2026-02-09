@@ -17,10 +17,15 @@ export const QuotePreview = () => {
       const editor = document.querySelector(SELECTORS.EDITOR) as HTMLElement;
       if (editor) {
         let currentContent = editor.innerText;
-        const cleanUserMsg = currentContent.replace(/### 以下の内容を引用して質問します:[\s\S]*?### 質問:/g, "").trim();
+        let cleanUserMsg = currentContent
+          .replace(/### 以下の内容を引用して質問します:[\s\S]*?### 質問:/g, "")
+          .replace(/\n{2,}/g, '\n');
         
-        // ★ マーカーとユーザー入力を密着させる（改行なし）
-        const finalPrompt = `${QUOTE_MARKER_START}\n\n${QUOTE_DELIMITER}\n${text}\n${QUOTE_DELIMITER}\n\n${QUOTE_MARKER_END}${cleanUserMsg}`;
+          if (cleanUserMsg.startsWith('\n')) {
+          cleanUserMsg = cleanUserMsg.substring(1);
+        }
+        
+        const finalPrompt = `${QUOTE_MARKER_START}\n\n${QUOTE_DELIMITER}\n${text}\n${QUOTE_DELIMITER}\n\n${QUOTE_MARKER_END}\n${cleanUserMsg}`;
         
         editor.focus();
         document.execCommand('selectAll', false);
